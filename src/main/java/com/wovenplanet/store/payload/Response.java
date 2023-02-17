@@ -1,15 +1,19 @@
 package com.wovenplanet.store.payload;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
+
 public class Response {
+	@JsonProperty("fileid")
 	private String fileId;
-	private String fileName;
+	private String name;
 	private long size;
+	@JsonProperty("created_at")
     private String createdAt;
     
 
     public Response(String fileId, String fileName, long size, String createdAt) {
     	this.fileId = fileId;
-    	this.fileName = fileName;
+    	this.name = fileName;
     	this.size = size;
         this.createdAt = createdAt;
     }
@@ -22,12 +26,12 @@ public class Response {
 		this.fileId = fileId;
 	}
 
-	public String getFileName() {
-		return fileName;
+	public String getName() {
+		return name;
 	}
 
-	public void setFileName(String fileName) {
-		this.fileName = fileName;
+	public void setName(String name) {
+		this.name = name;
 	}
 
 	public String getCreatedAt() {

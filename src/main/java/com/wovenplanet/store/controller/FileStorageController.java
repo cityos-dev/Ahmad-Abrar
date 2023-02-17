@@ -32,7 +32,7 @@ class FileStorageController {
     FileStorageServiceImpl fileStorageService;
 
 	@PostMapping("/files")
-	ResponseEntity<String> uploadFile(@RequestParam MultipartFile file) {
+	ResponseEntity<String> uploadFile(@RequestParam("data") MultipartFile file) {
 		if(!fileStorageService.isSupportedMedia(file))
 			return ResponseEntity.status(HttpStatus.UNSUPPORTED_MEDIA_TYPE).build();
 		if(fileStorageService.isNameConflict(file.getOriginalFilename())) 
