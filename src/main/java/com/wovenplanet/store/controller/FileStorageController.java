@@ -2,8 +2,6 @@ package com.wovenplanet.store.controller;
 import java.util.List;
 
 import org.apache.commons.lang3.tuple.ImmutablePair;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.Resource;
 import org.springframework.http.HttpHeaders;
@@ -19,10 +17,11 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
-
 import com.wovenplanet.store.model.FileData;
 import com.wovenplanet.store.payload.Response;
+import com.wovenplanet.store.service.FileIdGeneratorServiceImpl;
 import com.wovenplanet.store.service.FileStorageServiceImpl;
+import com.wovenplanet.store.service.FileValidationServiceImpl;
 
 @RestController
 @RequestMapping("v1")
@@ -30,23 +29,30 @@ class FileStorageController {
 	
     @Autowired
     FileStorageServiceImpl fileStorageService;
+    
+    @Autowired
+    FileIdGeneratorServiceImpl fileIdGeneratorService;
+    
+    @Autowired
+    FileValidationServiceImpl fileValidationService;
 
 	@PostMapping("/files")
 	ResponseEntity<String> uploadFile(@RequestParam("data") MultipartFile file) {
-		if(!fileStorageService.isSupportedMedia(file))
+		if(!fileValidationService.isSupportedMedia(file))
 			return ResponseEntity.status(HttpStatus.UNSUPPORTED_MEDIA_TYPE).build();
-		if(fileStorageService.isNameConflict(file.getOriginalFilename())) 
+		if(fileValidationService.isNameConflict(file.getOriginalFilename())) 
 			return ResponseEntity.status(HttpStatus.CONFLICT).build();
-		String savedFileId = fileStorageService.save(file);
+		String fileId = fileIdGeneratorService.generateId();
+		fileStorageService.save(file, fileId);
 		HttpHeaders headers = new HttpHeaders();
 		headers.add("Location",
-				ServletUriComponentsBuilder.fromCurrentContextPath().path(savedFileId).toUriString());
+				ServletUriComponentsBuilder.fromCurrentContextPath().path(fileId).toUriString());
 		return new ResponseEntity<>(headers, HttpStatus.CREATED);
 	}
 
     @GetMapping(value = "/files/{fileId}", produces = MediaType.TEXT_PLAIN_VALUE)
     ResponseEntity<Resource> downloadFile(@PathVariable String fileId) {
-    	if(!fileStorageService.fileExists(fileId)) {
+    	if(!fileStorageService.isPresent(fileId)) {
     		return ResponseEntity.notFound().build();
     	}
     	ImmutablePair<FileData, Resource> returnFile =  fileStorageService.find(fileId);
@@ -64,7 +70,7 @@ class FileStorageController {
     
     @RequestMapping(method = RequestMethod.DELETE, value = "/files/{fileId}")
     ResponseEntity<Void> delete(@PathVariable String fileId) {
-    	if(!fileStorageService.fileExists(fileId)) {
+    	if(!fileStorageService.isPresent(fileId)) {
     		return ResponseEntity.notFound().build();
     	}
     	fileStorageService.delete(fileId);

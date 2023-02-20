@@ -10,14 +10,14 @@ import com.wovenplanet.store.payload.Response;
 
 public interface FileStorageService {
 	
-	public String save(MultipartFile file);
-	
-	public boolean isSupportedMedia(MultipartFile file);
+	public void save(MultipartFile file, String fileId);
 	
 	public ImmutablePair<FileData, Resource> find(String fileId);
 	
 	public List<Response> findAll();
 	
 	public void delete(String fileId);
+	
+	public boolean isPresent(String fileId);
 
 }

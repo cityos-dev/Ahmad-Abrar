@@ -16,8 +16,6 @@ import com.wovenplanet.store.model.FileData;
 import com.wovenplanet.store.payload.Response;
 import com.wovenplanet.store.repository.FileDbRepository;
 import com.wovenplanet.store.repository.FileSystemRepository;
-import org.apache.commons.io.FilenameUtils;
-import org.apache.commons.lang3.RandomStringUtils;
 import org.apache.commons.lang3.tuple.ImmutablePair;
 
 @Service
@@ -29,29 +27,11 @@ public class FileStorageServiceImpl implements FileStorageService{
     FileDbRepository fileDbRepository;
 
 	@Override
-	public String save(MultipartFile file) {
-		String fileId = RandomStringUtils.randomAlphanumeric(8);
+	public void save(MultipartFile file, String fileId) {
 		long createdAt = Instant.now().getEpochSecond();
 		String location = fileSystemRepository.save(file, fileId, createdAt);
 		fileDbRepository.save(new FileData(fileId, file.getOriginalFilename(), location, file.getContentType(),
 				file.getSize(), createdAt));
-		return fileId;
-	}
-    
-	public boolean isSupportedMedia(MultipartFile file) {
-		if (file.getContentType().equalsIgnoreCase(Const.SUPPORTED_MEDIA_TYPE + Const.SUPPORTED_MEDIA_EXT_01)
-				|| file.getContentType().equalsIgnoreCase(Const.SUPPORTED_MEDIA_TYPE + Const.SUPPORTED_MEDIA_EXT_02))
-			return true;
-		if (FilenameUtils.getExtension(file.getOriginalFilename()).equalsIgnoreCase(Const.SUPPORTED_MEDIA_EXT_01)
-				|| FilenameUtils.getExtension(file.getOriginalFilename()).equalsIgnoreCase(Const.SUPPORTED_MEDIA_EXT_02))
-			return true;
-		return false;
-	}
-	
-	public boolean isNameConflict(String fileName) {
-		if (fileDbRepository.existsByNameAndStatus(fileName, Const.STATUS_PRESENT))
-			return true;
-		return false;
 	}
 
 	@Override
@@ -91,7 +71,7 @@ public class FileStorageServiceImpl implements FileStorageService{
 		fileDbRepository.save(file);
 	}
 	
-	public boolean fileExists(String fileId) {
+	public boolean isPresent(String fileId) {
 		return fileDbRepository.existsByFileIdAndStatus(fileId, Const.STATUS_PRESENT);
 	}
 }

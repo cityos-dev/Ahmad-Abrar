@@ -1,7 +1,6 @@
 package com.wovenplanet.store.exception;
 
 import java.time.Instant;
-
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ControllerAdvice;
@@ -13,17 +12,15 @@ import org.springframework.web.multipart.MultipartException;
 public class FileStoreExceptionHandler {
 	
 	@ExceptionHandler(InvalidLocationException.class)
-	public ResponseEntity<?> invalidLocationExceptionHandling(Exception exception, WebRequest request) {
-		return new ResponseEntity<>(
-				new ErrorDetails(Instant.now().toString(), exception.getMessage(), request.getDescription(false)),
-				HttpStatus.INTERNAL_SERVER_ERROR);
+	public ResponseEntity<?> invalidLocationExceptionHandling(Exception ex, WebRequest request) {
+		return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+				.body(new ErrorDetails(Instant.now().toString(), ex.getMessage(), request.getDescription(false)));
 	}
-	
-	@ExceptionHandler(FileStorageException.class)
-	public ResponseEntity<?> fileStorageExceptionHandling(Exception exception, WebRequest request) {
-		return new ResponseEntity<>(
-				new ErrorDetails(Instant.now().toString(), exception.getMessage(), request.getDescription(false)),
-				HttpStatus.INTERNAL_SERVER_ERROR);
+    
+    @ExceptionHandler(FileStorageException.class)
+	public ResponseEntity<?> fileStorageExceptionHandling(Exception ex, WebRequest request) {
+    	return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+				.body(new ErrorDetails(Instant.now().toString(), ex.getMessage(), request.getDescription(false)));
 	}
 
     @ExceptionHandler(Exception.class)
