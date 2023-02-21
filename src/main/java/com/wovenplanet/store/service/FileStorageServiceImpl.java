@@ -26,6 +26,12 @@ public class FileStorageServiceImpl implements FileStorageService{
     @Autowired
     FileDbRepository fileDbRepository;
 
+    /**
+	 * save file by saving metadata in db and file in file storage
+	 * @param file MultipartFile
+	 * @param fileId string
+	 * @return An immutablePair<FileData, Resource>
+	 */
 	@Override
 	public void save(MultipartFile file, String fileId) {
 		long createdAt = Instant.now().getEpochSecond();
@@ -34,16 +40,24 @@ public class FileStorageServiceImpl implements FileStorageService{
 				file.getSize(), createdAt));
 	}
 
+	/**
+	 * get file by fileId
+	 * @param fileId string
+	 * @return An immutablePair<FileData, Resource>
+	 */
 	@Override
 	public ImmutablePair<FileData, Resource> find(String fileId) {
-		FileData file = fileDbRepository.findByFileIdAndStatus(fileId, Const.STATUS_PRESENT);
+		FileData file = fileDbRepository.findByFileIdAndStatus(fileId, Const.STATUS.PRESENT);
 		Resource resource = fileSystemRepository.findInFileSystem(file.getLocation());
 		return new ImmutablePair<FileData, Resource>(file, resource);
 	}
 
+	/**
+	 * get all present files
+	 */
 	@Override
 	public List<Response> findAll() {
-		List<FileData> files = fileDbRepository.findAllByStatus(Const.STATUS_PRESENT);
+		List<FileData> files = fileDbRepository.findAllByStatus(Const.STATUS.PRESENT);
 		Collections.sort(files, new Comparator<FileData>() {
 	        public int compare(FileData f1, FileData f2) {
 	            if(f2.getCreatedAt()>f1.getCreatedAt())
@@ -62,16 +76,19 @@ public class FileStorageServiceImpl implements FileStorageService{
 	}
 
 	/**
-     * soft delete only. Garbage Collector implementation required for hard delete
+     * soft delete file by marking status flag as deleted.
+     * @param fileId string
+     * TODO
+     *  : hard delete implementation should be done by separate job which will run every fix interval
      */
 	@Override
 	public void delete(String fileId) {
-		FileData file = fileDbRepository.findByFileIdAndStatus(fileId, Const.STATUS_PRESENT);
-		file.setStatus(Const.STATUS_DELETED);
+		FileData file = fileDbRepository.findByFileIdAndStatus(fileId, Const.STATUS.PRESENT);
+		file.setStatus(Const.STATUS.DELETED);
 		fileDbRepository.save(file);
 	}
 	
 	public boolean isPresent(String fileId) {
-		return fileDbRepository.existsByFileIdAndStatus(fileId, Const.STATUS_PRESENT);
+		return fileDbRepository.existsByFileIdAndStatus(fileId, Const.STATUS.PRESENT);
 	}
 }

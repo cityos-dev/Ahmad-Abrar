@@ -1,7 +1,12 @@
 package com.wovenplanet.store.exception;
 
 public class FileStorageException extends RuntimeException {
-    public FileStorageException(String message) {
+    
+	public FileStorageException() {
+        super();
+    }
+	
+	public FileStorageException(String message) {
         super(message);
     }
 

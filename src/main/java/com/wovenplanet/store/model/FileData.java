@@ -5,6 +5,7 @@ import javax.persistence.Id;
 import javax.persistence.Table;
 
 import com.wovenplanet.store.constants.Const;
+import com.wovenplanet.store.constants.Const.STATUS;
 
 @Entity
 @Table(name = "FILE")
@@ -23,7 +24,7 @@ public class FileData {
     
     long createdAt;
     
-    int status;
+    STATUS status;
 
 	public FileData() {
     }
@@ -34,7 +35,7 @@ public class FileData {
         this.location = location;
         this.contentType = contentType;
         this.size = size;
-        this.status = Const.STATUS_PRESENT;
+        this.status = Const.STATUS.PRESENT;
         this.createdAt = createdAt;
     }
 
@@ -78,11 +79,11 @@ public class FileData {
 		this.size = size;
 	}
 
-	public int getStatus() {
+	public Const.STATUS getStatus() {
 		return status;
 	}
 
-	public void setStatus(int status) {
+	public void setStatus(Const.STATUS status) {
 		this.status = status;
 	}
 

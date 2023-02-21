@@ -1,7 +1,10 @@
 package com.wovenplanet.store.controller;
+
 import java.util.List;
 
 import org.apache.commons.lang3.tuple.ImmutablePair;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.Resource;
 import org.springframework.http.HttpHeaders;
@@ -17,6 +20,9 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
+import com.wovenplanet.store.exception.FileConflictException;
+import com.wovenplanet.store.exception.FileNotFoundException;
+import com.wovenplanet.store.exception.FileNotSupportedException;
 import com.wovenplanet.store.model.FileData;
 import com.wovenplanet.store.payload.Response;
 import com.wovenplanet.store.service.FileIdGeneratorServiceImpl;
@@ -26,54 +32,85 @@ import com.wovenplanet.store.service.FileValidationServiceImpl;
 @RestController
 @RequestMapping("v1")
 class FileStorageController {
-	
-    @Autowired
-    FileStorageServiceImpl fileStorageService;
-    
-    @Autowired
-    FileIdGeneratorServiceImpl fileIdGeneratorService;
-    
-    @Autowired
-    FileValidationServiceImpl fileValidationService;
 
+	private final Logger log = LoggerFactory.getLogger(this.getClass());
+
+	@Autowired
+	FileStorageServiceImpl fileStorageService;
+
+	@Autowired
+	FileIdGeneratorServiceImpl fileIdGeneratorService;
+
+	@Autowired
+	FileValidationServiceImpl fileValidationService;
+
+	/**
+	 * API for uploading a video.
+	 * 
+	 * @param file The video file to upload.
+	 * @return ResponseEntity  HttpStatus 201 and uploaded video location upon success.
+	 */
 	@PostMapping("/files")
 	ResponseEntity<String> uploadFile(@RequestParam("data") MultipartFile file) {
-		if(!fileValidationService.isSupportedMedia(file))
-			return ResponseEntity.status(HttpStatus.UNSUPPORTED_MEDIA_TYPE).build();
-		if(fileValidationService.isNameConflict(file.getOriginalFilename())) 
-			return ResponseEntity.status(HttpStatus.CONFLICT).build();
+		log.info("uploadFile start");
+		if (!fileValidationService.isSupportedMedia(file))
+			throw new FileNotSupportedException();
+		if (fileValidationService.isNameConflict(file.getOriginalFilename()))
+			throw new FileConflictException();
 		String fileId = fileIdGeneratorService.generateId();
 		fileStorageService.save(file, fileId);
 		HttpHeaders headers = new HttpHeaders();
-		headers.add("Location",
-				ServletUriComponentsBuilder.fromCurrentContextPath().path(fileId).toUriString());
+		headers.add("Location", ServletUriComponentsBuilder.fromCurrentContextPath().path(fileId).toUriString());
+		log.info("uploadFile end");
 		return new ResponseEntity<>(headers, HttpStatus.CREATED);
 	}
 
-    @GetMapping(value = "/files/{fileId}", produces = MediaType.TEXT_PLAIN_VALUE)
-    ResponseEntity<Resource> downloadFile(@PathVariable String fileId) {
-    	if(!fileStorageService.isPresent(fileId)) {
-    		return ResponseEntity.notFound().build();
-    	}
-    	ImmutablePair<FileData, Resource> returnFile =  fileStorageService.find(fileId);
-        return ResponseEntity.ok()
-                .contentType(MediaType.parseMediaType(returnFile.getKey().getContentType()))
-                .header(HttpHeaders.CONTENT_DISPOSITION,"attachment; filename= "+returnFile.getKey().getName())
-                .body(returnFile.getValue());
-    }
-    
+	/**
+	 * API for downloading a video.
+	 * 
+	 * @param videoId The ID of the video to download.
+	 * @return A ResponseEntity with the video file as a Resource object.
+	 */
+	@GetMapping(value = "/files/{fileId}", produces = MediaType.TEXT_PLAIN_VALUE)
+	ResponseEntity<Resource> downloadFile(@PathVariable String fileId) {
+		log.info("downloadFile start for file : \" + fileId");
+		if (!fileStorageService.isPresent(fileId)) {
+			throw new FileNotFoundException("file not found");
+		}
+		ImmutablePair<FileData, Resource> returnFile = fileStorageService.find(fileId);
+		log.info("downloadFile end");
+		return ResponseEntity.ok().contentType(MediaType.parseMediaType(returnFile.getKey().getContentType()))
+				.header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename= " + returnFile.getKey().getName())
+				.body(returnFile.getValue());
+	}
+
+	/**
+	 * API to get list of uploaded videos.
+	 * 
+	 * @return A ResponseEntity with a list of uploaded video metadata.
+	 */
 	@RequestMapping("/files")
-	public List<Response> getAll() {
+	public List<Response> getList() {
+		log.info("getList start");
 		List<Response> responseList = fileStorageService.findAll();
+		log.info("getList end");
 		return responseList;
 	}
-    
-    @RequestMapping(method = RequestMethod.DELETE, value = "/files/{fileId}")
-    ResponseEntity<Void> delete(@PathVariable String fileId) {
-    	if(!fileStorageService.isPresent(fileId)) {
-    		return ResponseEntity.notFound().build();
-    	}
-    	fileStorageService.delete(fileId);
-    	return ResponseEntity.noContent().build();
-    }
+
+	/**
+	 * API for deleting a video.
+	 * 
+	 * @param videoId The ID of the video to download.
+	 * @return A ResponseEntity with HttpStatus 204 upon success.
+	 */
+	@RequestMapping(method = RequestMethod.DELETE, value = "/files/{fileId}")
+	ResponseEntity<Void> delete(@PathVariable String fileId) {
+		log.info("delete start for file : " + fileId);
+		if (!fileStorageService.isPresent(fileId)) {
+			throw new FileNotFoundException("file not found");
+		}
+		fileStorageService.delete(fileId);
+		log.info("delete end");
+		return ResponseEntity.noContent().build();
+	}
 }

@@ -37,7 +37,7 @@ public class LoggingAspect {
     /**
      * Pointcut that matches all Spring beans in the application's main packages.
      */
-    @Pointcut("within(com.wovenplanet.store..*)" +
+    @Pointcut("within(com.wovenplanet.store.repository..*)" +
         " || within(com.wovenplanet.store.service..*)" +
         " || within(com.wovenplanet.store.controller..*)")
     public void applicationPackagePointcut() {
@@ -66,14 +66,17 @@ public class LoggingAspect {
     public Object logAround(ProceedingJoinPoint joinPoint) throws Throwable {
     	
     	long startTime = System.currentTimeMillis();
-    	log.info("Enter: {}.{}() with argument[s] = {}", joinPoint.getSignature().getDeclaringTypeName(),
-                joinPoint.getSignature().getName(), Arrays.toString(joinPoint.getArgs()));
-        
+    	if (log.isDebugEnabled()) {
+	    	log.debug("Enter: {}.{}() with argument[s] = {}", joinPoint.getSignature().getDeclaringTypeName(),
+	                joinPoint.getSignature().getName(), Arrays.toString(joinPoint.getArgs()));
+    	}
         long totalTime = System.currentTimeMillis() - startTime;
         try {
-            Object result = joinPoint.proceed();
-            log.info("Exit: {}.{}() with result = {}.total time taken: {} ms", joinPoint.getSignature().getDeclaringTypeName(),
-                    joinPoint.getSignature().getName(), result, totalTime);
+        	Object result = joinPoint.proceed();
+        	if (log.isDebugEnabled()) {
+	            log.debug("Exit: {}.{}() with result = {}.total time taken: {} ms", joinPoint.getSignature().getDeclaringTypeName(),
+	                    joinPoint.getSignature().getName(), result, totalTime);
+        	}
             return result;
         } catch (IllegalArgumentException e) {
             log.error("Illegal argument: {} in {}.{}()", Arrays.toString(joinPoint.getArgs()),

@@ -14,15 +14,19 @@ import com.wovenplanet.store.exception.FileStorageException;
 @Service
 public class FileIdGeneratorServiceImpl implements FileIdGeneratorService {
 
+	/**
+     * generate unique file id for storage.
+     */
 	@Override
 	public String generateId() {
 		return RandomStringUtils.randomAlphanumeric(8);
 	}
 	
 	/**
-     * function not used, but implemented as an idea of comparing file data for duplication
-     * Would like to discuss further in next technical interview round
-     */
+	 * Generate unique id by hashing file content.
+	 * function not used. Implemented as an idea of comparing file data for
+	 * duplication. Would like to discuss further in next technical interview round
+	 */
 	public String generateId(MultipartFile file) {
         byte[] hash = null;
 		try {

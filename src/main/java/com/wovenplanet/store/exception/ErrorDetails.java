@@ -1,7 +1,5 @@
 package com.wovenplanet.store.exception;
 
-import java.util.Date;
-
 public class ErrorDetails {
     private String timestamp;
     private String message;
@@ -12,4 +10,24 @@ public class ErrorDetails {
 		this.message = message;
 		this.details = details;
 	}
+	public String getTimestamp() {
+		return timestamp;
+	}
+	public void setTimestamp(String timestamp) {
+		this.timestamp = timestamp;
+	}
+	public String getMessage() {
+		return message;
+	}
+	public void setMessage(String message) {
+		this.message = message;
+	}
+	public String getDetails() {
+		return details;
+	}
+	public void setDetails(String details) {
+		this.details = details;
+	}
+	
+	
 }
